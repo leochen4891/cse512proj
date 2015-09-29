@@ -1,6 +1,8 @@
 package mygroup.myartifact;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.SparkConf;
 
@@ -24,14 +26,22 @@ public class App {
 			// -------> " + totalLength);
 
 			// 1. read the lines from the input file in HDFS
-			JavaRDD<String> lines1 = sc.textFile("hdfs://192.168.184.165:54310/test_data.dat");
+			JavaRDD<String> lines1 = sc.textFile("hdfs://192.168.184.165:54310/union_input.csv");
 			
 			// 2. perform some calculation
-			JavaRDD<Integer> lineLengths1 = lines1.map(s -> s.length());
-			int totalLength1 = lineLengths1.reduce((a, b) -> a + b);
+//			JavaRDD<Integer> lineLengths1 = lines1.map(s -> s.length());
+//			int totalLength1 = lineLengths1.reduce((a, b) -> a + b);
+			
+			JavaRDD<Integer> lineLengths = lines1.map(new Function<String, Integer>() {
+			  public Integer call(String s) { return s.length(); }
+			});
+			
+			int totalLength = lineLengths.reduce(new Function2<Integer, Integer, Integer>() {
+			  public Integer call(Integer a, Integer b) { return a + b; }
+			});
 			
 			// 3. output to a file
-			System.out.println("total length of all lines in HDFS file -------> " + totalLength1 + "\n");
+			System.out.println("total length of all lines in HDFS file -------> " + totalLength + "\n");
 
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -29,8 +29,8 @@ public class HDFSFileCopy {
 		try {
 			String hdfspath = "hdfs://192.168.184.165:54310";
 
-			String src = "/home/user/test_data.dat";
-			String dst = "/test_data.dat1";
+			String src = "/home/user/union_input.csv";
+			String dst = "/union_input.csv";
 			copyToHDFS(src, dst, hdfspath);
 
 			src = dst;
