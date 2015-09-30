@@ -4,6 +4,9 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.JavaRDD;
+
+import java.util.List;
+
 import org.apache.spark.SparkConf;
 
 /**
@@ -39,6 +42,11 @@ public class App {
 			int totalLength = lineLengths.reduce(new Function2<Integer, Integer, Integer>() {
 			  public Integer call(Integer a, Integer b) { return a + b; }
 			});
+			
+			List<Integer> result = lineLengths.collect();
+			for (Integer i : result) {
+				System.out.println(i);
+			}
 			
 			// 3. output to a file
 			System.out.println("total length of all lines in HDFS file -------> " + totalLength + "\n");
