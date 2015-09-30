@@ -27,8 +27,8 @@ public class UnionJTS {
 	}
 
 	/**
-	 * Get a rectangle from a input of 4 doubles, x1, y1, x2, y2, which are the left-top
-	 * and right-bottom corner of a rectangle
+	 * Get a rectangle from a input of 4 doubles, x1, y1, x2, y2, which are the
+	 * left-top and right-bottom corner of a rectangle
 	 */
 	public static Geometry getRectangleFromLeftTopAndRightBottom(double x1, double y1, double x2, double y2) {
 		Coordinate[] ps = new Coordinate[5];
@@ -41,6 +41,20 @@ public class UnionJTS {
 		return factory.createPolygon(ring, null);
 	}
 
+	public static Geometry getRectangleFromLeftTopAndRightBottom(String line) {
+		Geometry ret = null;
+		try {
+			Double[] doubles = getDoublesFromLine(line);
+			if (null == doubles || doubles.length != 4)
+				throw new Exception("Invalid input format:" + line);
+
+			ret = getRectangleFromLeftTopAndRightBottom(doubles[0], doubles[1], doubles[2], doubles[3]);
+		} catch (Exception e) {
+			return null;
+		}
+		return ret;
+	}
+
 	/**
 	 * each string should be in format x1, y1, x2, y2, which are the left-top
 	 * and right-bottom corner of a rectangle
@@ -49,16 +63,10 @@ public class UnionJTS {
 		Geometry ret = null;
 		try {
 			while (null != it && it.hasNext()) {
-				String str = it.next();
-				String[] strs = str.split(",");
-				if (null == strs || strs.length != 4)
-					throw new Exception("Invalid input format:" + str);
-
-				int size = strs.length;
-				Double[] doubles = new Double[size];
-				for (int i = 0; i < size; i++) {
-					doubles[i] = Double.parseDouble(strs[i]);
-				}
+				String line = it.next();
+				Double[] doubles = getDoublesFromLine(line);
+				if (null == doubles || doubles.length != 4)
+					throw new Exception("Invalid input format:" + line);
 
 				Geometry next = getRectangleFromLeftTopAndRightBottom(doubles[0], doubles[1], doubles[2], doubles[3]);
 				if (null == ret) {
@@ -82,5 +90,24 @@ public class UnionJTS {
 			ret = ret.union(it.next());
 		}
 		return ret;
+	}
+
+	public static Double[] getDoublesFromLine(String line) {
+		Double[] ret = null;
+		try {
+			String[] strs = line.split(",");
+			if (null == strs || strs.length != 4)
+				throw new Exception("Invalid input format:" + line);
+
+			int size = strs.length;
+			ret = new Double[size];
+			for (int i = 0; i < size; i++) {
+				ret[i] = Double.parseDouble(strs[i]);
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		return ret;
+
 	}
 }
