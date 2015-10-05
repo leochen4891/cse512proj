@@ -27,26 +27,27 @@ import org.apache.hadoop.util.Progressable;
 public class HDFSFileCopy {
 	public static void main(String[] args) {
 		try {
-			String hdfspath = "hdfs://192.168.184.165:54310";
+			String hdfsPath = "hdfs://192.168.184.165:54310/";
+			String localPath = "/home/user/";
 
-			String src = "/home/user/test_data.dat";
-			String dst = "/test_data.dat1";
-			copyToHDFS(src, dst, hdfspath);
+			String src = "union_input.csv";
+			String dst = "union_input.csv";
+			copyToHDFS(src, dst, hdfsPath, localPath);
 
 			src = dst;
-			dst = "/home/user/output.dat";
-			copyFromHDFS(src, dst, hdfspath);
+			dst = "union_output.csv";
+			copyFromHDFS(src, dst, hdfsPath, localPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static void copyToHDFS(String src, String dst, String hdfspath) throws IOException, URISyntaxException {
-		InputStream inputStream = new BufferedInputStream(new FileInputStream(src));
+	public static void copyToHDFS(String src, String dst, String hdfsPath, String localPath) throws IOException, URISyntaxException {
+		InputStream inputStream = new BufferedInputStream(new FileInputStream(localPath + src));
 
 		Configuration configuration = new Configuration();
-		FileSystem hdfs = FileSystem.get(new URI(hdfspath), configuration);
-		OutputStream outputStream = hdfs.create(new Path(hdfspath + dst), new Progressable() {
+		FileSystem hdfs = FileSystem.get(new URI(hdfsPath), configuration);
+		OutputStream outputStream = hdfs.create(new Path(hdfsPath + dst), new Progressable() {
 			public void progress() {
 				// System.out.print(".");
 			}
@@ -57,21 +58,21 @@ public class HDFSFileCopy {
 			IOUtils.closeStream(inputStream);
 			IOUtils.closeStream(outputStream);
 		}
-		System.out.println("local:" + src + "  ---->  hdfs:" + dst);
+		System.out.println(localPath + src + "  ----> " + hdfsPath + dst);
 	}
 
-	public static void copyFromHDFS(String src, String dst, String hdfspath) throws IOException, URISyntaxException {
+	public static void copyFromHDFS(String src, String dst, String hdfsPath, String localPath) throws IOException, URISyntaxException {
 		Configuration configuration = new Configuration();
-		FileSystem hdfs = FileSystem.get(new URI(hdfspath), configuration);
-		FSDataInputStream inputStream = hdfs.open(new Path(src));
+		FileSystem hdfs = FileSystem.get(new URI(hdfsPath), configuration);
+		FSDataInputStream inputStream = hdfs.open(new Path(hdfsPath+src));
 
-		OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(new File(dst)));
+		OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(new File(localPath + dst)));
 		try {
 			IOUtils.copyBytes(inputStream, outputStream, 4096, false);
 		} finally {
 			IOUtils.closeStream(inputStream);
 			IOUtils.closeStream(outputStream);
 		}
-		System.out.println("hdfs:" + src + "  ---->  local:" + dst);
+		System.out.println(hdfsPath + src + "  ----> " + localPath + dst);
 	}
 }
