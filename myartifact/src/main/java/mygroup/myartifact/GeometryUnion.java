@@ -38,8 +38,14 @@ public class GeometryUnion {
 			HDFSFileCopy.copyToHDFS(INPUT_FILE, INPUT_FILE, HDFS_ROOT_PATH, LOCAL_PATH);
 
 			// 1. read the lines from the input file in HDFS
-			SparkConf conf = new SparkConf().setAppName("MyAppName").setMaster("local");
-			sc = new JavaSparkContext(conf);
+			boolean local = false;
+			if (local) {
+				sc = new JavaSparkContext("local", "GeometryUnion");
+			} else {
+				sc = new JavaSparkContext("spark://192.168.184.165:7077", "GeometryUnion",
+						"/home/user/spark-1.5.0-bin-hadoop2.6",
+						new String[] { "target/myartifact-0.1.jar", "lib/jts/lib/jts-1.8.jar" });
+			}
 			JavaRDD<String> lines = sc.textFile(HDFS_ROOT_PATH + INPUT_FILE);
 
 			// 2. Geometry Union
@@ -73,6 +79,7 @@ public class GeometryUnion {
 			PrintWriter pw = new PrintWriter(outputStream);
 			for (Coordinate cor : finalPolygon.getCoordinates()) {
 				pw.println(cor.x + ", " + cor.y);
+				System.out.println(cor.x + ", " + cor.y);
 			}
 			pw.flush();
 			pw.close();

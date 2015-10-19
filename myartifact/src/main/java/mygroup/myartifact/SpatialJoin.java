@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -11,20 +12,22 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.JavaRDD;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 
-public class SpatialRange {
+import scala.Tuple2;
+
+public class SpatialJoin {
 	private static final String HDFS_ROOT_PATH = "hdfs://192.168.184.165:54310/";
 	private static final String LOCAL_PATH = "/home/user/";
 
-	private static final String INPUT_FILE_1 = "range_input_1.csv";
-	// TODO read input 2 from file
-	// private static final String INPUT_FILE = "range_input.csv";
+	private static final String INPUT_FILE_1 = "join_input_1.csv";
+	private static final String INPUT_FILE_2 = "join_input_2.csv";
 	private static final String OUTPUT_FILE = "range_output.csv";
 
 	public static void main(String[] args) {
@@ -41,30 +44,41 @@ public class SpatialRange {
 			// 1. read the lines from the input file in HDFS
 			SparkConf conf = new SparkConf().setAppName("MyAppName").setMaster("local");
 			sc = new JavaSparkContext(conf);
-			JavaRDD<String> lines = sc.textFile(HDFS_ROOT_PATH + INPUT_FILE_1);
-			// TODO read from input_file_2 instead of hard coded
-			final Geometry window = UnionJTS.getRectangleFromLeftTopAndRightBottom(0, 0, 1, 1);
+			JavaRDD<String> lines1 = sc.textFile(HDFS_ROOT_PATH + INPUT_FILE_1);
+			JavaRDD<String> lines2 = sc.textFile(HDFS_ROOT_PATH + INPUT_FILE_2);
 
-			// 2. spatial range query
+			// 2. spatial join query
 			// 2.1 map: convert each line of string to a polygon
-			JavaRDD<Geometry> polygons = lines.map(new Function<String, Geometry>() {
-				private static final long serialVersionUID = -4119796271168086532L;
+			JavaRDD<Geometry> polygons1 = lines1.map(new Function<String, Geometry>() {
+				private static final long serialVersionUID = -4119796271168086533L;
+
+				public Geometry call(String s) {
+					return UnionJTS.getRectangleFromLeftTopAndRightBottom(s);
+				}
+			});
+			JavaRDD<Geometry> polygons2 = lines2.map(new Function<String, Geometry>() {
+				private static final long serialVersionUID = -4119796271168086534L;
 
 				public Geometry call(String s) {
 					return UnionJTS.getRectangleFromLeftTopAndRightBottom(s);
 				}
 			});
 
-			// 2.2 filter: filter to allow the ones only in the query window
-			JavaRDD<Geometry> rangeResults = polygons.filter(new Function<Geometry, Boolean>() {
-				private static final long serialVersionUID = -5424930742935658378L;
+			// 2.2 get the cartesian product
+			JavaPairRDD<Geometry, Geometry> cartesian = polygons1.cartesian(polygons2);
 
-				@Override
-				public Boolean call(Geometry g) throws Exception {
-					return window.contains(g);
-				}
-			});
-
+			// 2.3 filter: to get the pairs that overlaps
+			JavaPairRDD<Geometry, Geometry> filtered = cartesian
+					.filter(new Function<Tuple2<Geometry, Geometry>, Boolean>() {
+						public Boolean call(Tuple2<Geometry, Geometry> keyValue) {
+							return keyValue._1().intersects(keyValue._2());
+						}
+					});
+			
+			// 2.4 combineByKey: to get the list of polygons for each key
+			// USE combineByKey to "aggregate 
+			// TODO
+			
 			// 3. output to an HDFS file
 			Configuration configuration = new Configuration();
 			FileSystem hdfs = FileSystem.get(new URI(HDFS_ROOT_PATH), configuration);
@@ -74,11 +88,11 @@ public class SpatialRange {
 				}
 			});
 			PrintWriter pw = new PrintWriter(outputStream);
-			for (Geometry g : rangeResults.collect()) {
-				for (Coordinate cor : g.getCoordinates()) {
-					pw.println(cor.x + ", " + cor.y);
-				}
-			}
+//			for (Geometry g : rangeResults.collect()) {
+//				for (Coordinate cor : g.getCoordinates()) {
+//					pw.println(cor.x + ", " + cor.y);
+//				}
+//			}
 			pw.flush();
 			pw.close();
 

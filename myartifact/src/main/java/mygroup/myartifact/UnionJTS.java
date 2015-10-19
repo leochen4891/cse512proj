@@ -6,24 +6,32 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.MultiPolygon;
 
 public class UnionJTS {
 	private static GeometryFactory factory = new GeometryFactory();
 
 	public static void main(String[] args) {
-		Geometry[] polygons = new Geometry[5];
-		polygons[0] = getRectangleFromLeftTopAndRightBottom(0.321534855, 0.036295831, -0.23567288, -0.415640992);
-		polygons[1] = getRectangleFromLeftTopAndRightBottom(0.115064798, 0.105952147, -0.161920957, -0.405533972);
-		polygons[2] = getRectangleFromLeftTopAndRightBottom(0.238709092, 0.016298271, -0.331934184, -0.18218141);
-		polygons[3] = getRectangleFromLeftTopAndRightBottom(0.2069243, 0.223297076, -0.050542958, -0.475492946);
-		polygons[4] = getRectangleFromLeftTopAndRightBottom(0.321534855, 0.036295831, -0.440428957, -0.289485599);
-
-		Geometry res = polygons[0];
-		for (int i = 1; i < polygons.length; i++) {
-			res = res.union(polygons[i]);
-		}
-
-		System.out.println(res);
+//		Geometry[] polygons = new Geometry[5];
+//		polygons[0] = getRectangleFromLeftTopAndRightBottom(0.321534855, 0.036295831, -0.23567288, -0.415640992);
+//		polygons[1] = getRectangleFromLeftTopAndRightBottom(0.115064798, 0.105952147, -0.161920957, -0.405533972);
+//		polygons[2] = getRectangleFromLeftTopAndRightBottom(0.238709092, 0.016298271, -0.331934184, -0.18218141);
+//		polygons[3] = getRectangleFromLeftTopAndRightBottom(0.2069243, 0.223297076, -0.050542958, -0.475492946);
+//		polygons[4] = getRectangleFromLeftTopAndRightBottom(0.321534855, 0.036295831, -0.440428957, -0.289485599);
+//
+//		Geometry res = polygons[0];
+//		for (int i = 1; i < polygons.length; i++) {
+//			res = res.union(polygons[i]);
+//		}
+//
+//		System.out.println(res);
+		Geometry g1 = getRectangleFromLeftTopAndRightBottom(0,1,1,0);
+		Geometry g2 = getRectangleFromLeftTopAndRightBottom(1,1,2,0);
+		Geometry g3 = getRectangleFromLeftTopAndRightBottom(2,1,3,0);
+		Geometry g = g1.union(g3);
+		MultiPolygon mp;
+		g = g.union(g2);
+		System.out.println(g);
 	}
 
 	/**
